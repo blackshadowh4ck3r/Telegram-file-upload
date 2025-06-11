@@ -4,8 +4,8 @@ import os
 
 app = Flask(__name__)
 
-BOT_TOKEN = 'YOUR_BOT_TOKEN'
-CHAT_ID = 'YOUR_CHAT_ID'
+BOT_TOKEN = '8133949217:AAGpM5tJlJPsySZTzRHXGimRWzvY7SMmo5s'
+CHAT_ID = '7968926183'
 
 @app.route('/')
 def index():
