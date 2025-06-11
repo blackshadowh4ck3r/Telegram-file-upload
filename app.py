@@ -30,6 +30,3 @@ def upload_file():
         except:
             return "❌ Error: file link not found"
     return "No file uploaded"
-
-if __name__ == '__main__':
-    app.run()
