@@ -1,3 +1,6 @@
-Flask
-requests
-gunicorn
+Flask 52.41.36.82
+requests 54.191.253.12
+gunicorn 44.226.122.3
+
+
+
