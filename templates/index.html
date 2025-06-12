@@ -1,13 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Telegram File Uploader</title>
+  <title>Telegram File Uploader</title>
 </head>
 <body>
-    <h1>Upload File</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="Upload">
-    </form>
+  <h2>Upload Any File</h2>
+  <input type="file" id="fileInput">
+  <button onclick="uploadFile()">Upload</button>
+  <p id="status"></p>
+  <script>
+    function uploadFile() {
+      const file = document.getElementById('fileInput').files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      }).then(response => response.json())
+        .then(data => {
+          if (data.download_link) {
+            document.getElementById('status').innerHTML =
+              `<a href="${data.download_link}" target="_blank">Download Link</a>`;
+          } else {
+            document.getElementById('status').innerText = data.error || 'Upload failed';
+          }
+        });
+    }
+  </script>
 </body>
 </html>
