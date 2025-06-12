@@ -1,44 +1,42 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template
 import requests
 import os
 
-app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
-BOT_TOKEN = '8133949217:AAGpM5tJlJPsySZTzRHXGimRWzvY7SMmo5s'
-CHAT_ID = '7968926183'
+# === Replace with your token and chat ID ===
+BOT_TOKEN = "8133949217:AAGpM5tJlJPsySZTzRHXGimRWzvY7SMmo5s"
+CHAT_ID = "7968926183"
 
+app = Flask(__name__)
+UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+@app.route("/", methods=["GET", "POST"])
+def upload_file():
+    link = None
+    if request.method == "POST":
+        file = request.files["file"]
+        if file:
+            filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+            file.save(filepath)
 
-@app.route('/upload', methods=['POST'])
-def upload():
-    file = request.files['file']
-    if not file:
-        return jsonify({'error': 'No file uploaded'}), 400
+            # Upload to Telegram
+            with open(filepath, "rb") as f:
+                url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
+                data = {"chat_id": CHAT_ID}
+                files = {"document": f}
+                response = requests.post(url, data=data, files=files).json()
 
-    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(filepath)
+            os.remove(filepath)
 
-    with open(filepath, 'rb') as f:
-        url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendDocument'
-        response = requests.post(url, data={'chat_id': CHAT_ID}, files={'document': f})
+            try:
+                file_id = response["result"]["document"]["file_id"]
+                getfile = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={file_id}").json()
+                file_path = getfile["result"]["file_path"]
+                link = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+            except Exception as e:
+                link = "Upload failed or wrong token/chat_id."
 
-    os.remove(filepath)
+    return render_template("index.html", link=link)
 
-    if response.ok:
-        file_info = response.json()
-        file_id = file_info['result']['document']['file_id']
-        file_path_resp = requests.get(
-            f'https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={file_id}'
-        )
-        file_path = file_path_resp.json()['result']['file_path']
-        direct_link = f'https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}'
-        return jsonify({'download_link': direct_link})
-    else:
-        return jsonify({'error': 'Telegram upload failed'}), 500
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
